@@ -7,6 +7,7 @@ import loss
 from option import args
 from trainer.slim_contrast_trainer import SlimContrastiveTrainer
 from trainer.seperate_contrast_trainer import SeperateContrastiveTrainer
+from trainer.multi_csd_trainer import MultiCSDTrainer
 from data.neg_sample import Neg_Dataset
 from data.div2k_class import DIV2K_Class
 
@@ -18,18 +19,12 @@ signal(SIGPIPE, SIG_IGN)
 
 if __name__ == '__main__':
     loader = data.Data(args)
-    # neg_loader = DataLoader(dataset=Neg_Dataset(args.neg_dir),
-    #                         batch_size=args.neg_num, shuffle=True, pin_memory=True, num_workers=args.n_threads,)
-    # div2k_loader = DataLoader(dataset=DIV2K_Class('/home/wyb/DIV2K_valid_HR_sub_psnr_LR_class1/', '/home/wyb/DIV2K_valid_HR_sub_psnr_GT_class1/'),
-    #                           batch_size=1, shuffle=False)
-    # loader.loader_test = [div2k_loader]
-
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if args.seperate:
         t = SeperateContrastiveTrainer(args, loader, device)
     else:
         t = SlimContrastiveTrainer(args, loader, device)
-        # t = SlimContrastiveTrainer(args, loader, device, neg_loader)
+    #     t = SlimContrastiveTrainer(args, loader, device, neg_loader)
 
     if args.model_stat:
         total_param = 0
@@ -47,5 +42,6 @@ if __name__ == '__main__':
     if not args.test_only:
         t.train()
     else:
-        t.test(args.stu_width_mult)
+        t.sub_test()
+        # t.test(args.stu_width_mult)
     checkpoint.done()
