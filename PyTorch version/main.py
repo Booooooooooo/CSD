@@ -6,10 +6,6 @@ import data
 import loss
 from option import args
 from trainer.slim_contrast_trainer import SlimContrastiveTrainer
-from trainer.seperate_contrast_trainer import SeperateContrastiveTrainer
-from trainer.multi_csd_trainer import MultiCSDTrainer
-from data.neg_sample import Neg_Dataset
-from data.div2k_class import DIV2K_Class
 
 torch.manual_seed(args.seed)
 checkpoint = utility.checkpoint(args)
@@ -42,6 +38,5 @@ if __name__ == '__main__':
     if not args.test_only:
         t.train()
     else:
-        t.sub_test()
-        # t.test(args.stu_width_mult)
+        t.test(args.stu_width_mult)
     checkpoint.done()

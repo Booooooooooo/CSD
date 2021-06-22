@@ -245,6 +245,8 @@ def adjust_learning_rate(optimizer, epoch, total_epoch, init_lr, epoch_decay=200
     return lr
 
 def save_results(filename, v, scale, width, rgb_range, postfix, dir='./test/result/'):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
     filename = '{}_x{}_{}'.format(filename, scale, width)
 
     normalized = v[0].mul(255 / rgb_range)

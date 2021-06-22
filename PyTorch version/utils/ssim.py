@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import signal
-from skimage.measure import compare_ssim
 
 def trans2Y(img):
   img_r = img[:, 0, :, :]

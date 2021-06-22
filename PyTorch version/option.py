@@ -159,8 +159,6 @@ parser.add_argument('--model_filename', type=str, default='', help='pre-train mo
 parser.add_argument('--model_str', type=str, default='', help='save the model as filename{model_str}')
 parser.add_argument('--teacher_model', type=str, default='output/model/edsr/baseline/edsr_x4_baseline.pth',
                     help='load teacher model from {teacher_model}')
-parser.add_argument('--class_model_filename', type=str, default='', help='pre-train classSR model filename')
-parser.add_argument('--moa', action='store_true', help='use mixture of augmentation')
 
 parser.add_argument('--neg_num', type=int, default=8,
                     help='negative samples number')
@@ -181,13 +179,6 @@ parser.add_argument('--blur_sigma', type=float, default=0, help='blur sigma of n
 parser.add_argument('--noise_sigma', type=float, default=0, help='noise sigma of neg sample')
 
 parser.add_argument('--seperate', action='store_true', help='seperate teacher and student')
-# parser.add_argument('--neg_dir', type=str, default='../../../dataset',
-                    # help='negative samples dataset directory')
-parser.add_argument('--style_neg', action='store_true', help='style transfer negative samples')
-
-parser.add_argument('--topk', type=int, default=5, help='select top {topk} patches in a batch pass through big model;'
-                                                        '{topk}=-1 means adaptive select a value for {topk}')
-parser.add_argument('--pro_contrast', action='store_true', help='progressive teacher in contrastive loss')
 
 args = parser.parse_args()
 
