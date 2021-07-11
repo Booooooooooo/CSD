@@ -195,10 +195,10 @@ class SlimContrastiveTrainer:
                     #         self.makedirs = os.makedirs(f'./output/test/{self.model_str}/{self.model_filename}')
                         utility.save_results(str(filename), sr, self.scale, width_mult,
                                              self.rgb_range, 'SR')
-                    if hr.shape == lr.shape:
-                        psnr += utility.calc_psnr(sr, hr, self.scale, self.rgb_range, dataset=d)
-                        niqe_score += niqe(sr.squeeze(0).permute(1, 2, 0).cpu().numpy())
-                        ssim += calc_ssim(sr, hr, self.scale, dataset=d)
+
+                    psnr += utility.calc_psnr(sr, hr, self.scale, self.rgb_range, dataset=d)
+                    niqe_score += niqe(sr.squeeze(0).permute(1, 2, 0).cpu().numpy())
+                    ssim += calc_ssim(sr, hr, self.scale, dataset=d)
 
                 psnr /= len(d)
                 niqe_score /= len(d)
