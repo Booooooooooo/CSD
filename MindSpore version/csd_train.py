@@ -1,50 +1,25 @@
-from mindspore import nn, Model, ops
+from __future__ import print_function
+
+# import moxing as mox
+# mox.file.shift('os', 'mox')
 
 import os
 from os.path import join
+from glob import glob
+import numpy as np
 
 from option import opt
 from models.edsr import EDSR
 from data import get_training_set
+from trainer.baseline_trainer import train
+from trainer.slim_contrast_trainer import csd_train, load_model
+from test import test
 
 import mindspore.dataset as ds
 from mindspore import load_checkpoint, load_param_into_net
+from mindspore import Parameter, Tensor
 from mindspore import context
-
-def test(net, test_loader, width_mult=1):
-    # l1_loss = nn.L1Loss()
-    model = Model(net)
-    # result = model.eval(test_loader)
-
-    _psnr = nn.PSNR()
-    _ssim = nn.SSIM()
-
-    psnr = 0.0
-    ssim = 0.0
-    bic_psnr = 0.0
-    for item in test_loader.create_dict_iterator():
-        sr = net(item["input"], width_mult) ##TODO：可能出来尺度会不一样，要处理一下
-        # sr = model.predict(item["input"])
-        hr = item["target"]
-
-        crop_w = hr.shape[-2] - sr.shape[-2]
-        crop_h = hr.shape[-1] - sr.shape[-1]
-        if crop_w > 0:
-            hr = hr[:, :, int(crop_w/2):-(crop_w - int(crop_w/2)), :]
-        if crop_h > 0:
-            hr = hr[:, :, :, int(crop_h/2):-(crop_h - int(crop_h/2))]
-
-        psnr += _psnr(sr, hr)
-        ssim += _ssim(sr, hr)
-
-        # bilinear = rescale_img(lr, 4)
-        # bic_psnr += _psnr(bilinear, hr)
-
-    # print(f"PSNR:{psnr / test_loader.get_dataset_size()}, SSIM:{ssim / test_loader.get_dataset_size()}")
-    psnr /= test_loader.get_dataset_size()
-    ssim /= test_loader.get_dataset_size()
-    return psnr.asnumpy(), ssim.asnumpy()
-
+from mindspore.communication.management import init
 
 if __name__ == '__main__':
     context.set_auto_parallel_context(device_num=opt.gpus)
@@ -91,28 +66,12 @@ if __name__ == '__main__':
     else:
         print('Not implemented...')
 
-    # load
-    if not os.listdir(opt.pretrained_path):
-        print(f"[!] No checkpoint in {opt.pretrained_path}")
-    else:
-        model = os.path.join(opt.pretrained_path, opt.model_filename)
-        if not model:
-            print(f"[!] No checkpoint ")
-
-    print(f"Testing not loaded model")
-    print(test(net, testing_data_loader))
-    ## Test
-    param_dict = load_checkpoint(model)
-    # 将参数加载到网络中
-    load_param_into_net(net, param_dict)
-    # print("After loading")
-    # for item in net.get_parameters():
-    #     print(item.asnumpy())
-    #     break
-    print(f"Testing trained model {opt.model_filename}")
+    load_model(net, opt)
+    print(f"Testing trained model {opt.teacher_model}")
     # print(test(net, testing_data_loader, opt.stu_width_mult))
-    print(test(net, testing_data_loader))
+    # print(test(net, testing_data_loader, Tensor(1)))
 
-
+    ### Train CSD
+    csd_train(training_data_loader, net, opt)
 
 

@@ -1,81 +1,43 @@
 import sys
 
-from models.common import CustomWithLossCell
+from mindspore import nn, Model, Tensor
+from mindspore.train.callback import LossMonitor, ModelCheckpoint, CheckpointConfig, SummaryCollector
 
-from mindspore import nn, Model
-from mindspore.train.callback import LossMonitor, ModelCheckpoint, CheckpointConfig
+# from utils.utils import metrics
+from utils.callback import EvalCallBack
+from utils.lr import get_lr
 
-class PSNRMetrics(nn.Metric):
-    def __init__(self):
-        super(PSNRMetrics, self).__init__()
-        self.eps = sys.float_info.min
-        self.psnr_net = nn.PSNR()
-        self.clear()
 
-    def clear(self):
-        self.psnr = 0
-        self._samples_num = 0
-
-    def update(self, *inputs):
-        if len(inputs) != 2:
-            raise ValueError('PSNR need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
-        # y_pred = self._convert_data(inputs[0])
-        # y = self._convert_data(inputs[1])
-        y_pred = inputs[0]
-        y = inputs[1]
-        psnr = self.psnr_net(y_pred, y)
-        self.psnr += psnr
-        self._samples_num += 1
-
-    def eval(self):
-        if self._samples_num == 0:
-            raise RuntimeError('Total samples num must not be 0.')
-        return self.psnr / self._samples_num
-
-class SSIMMetrics(nn.Metric):
-    def __init__(self):
-        super(SSIMMetrics, self).__init__()
-        self.eps = sys.float_info.min
-        self.ssim_net = nn.SSIM()
-        self.clear()
-
-    def clear(self):
-        self.ssim = 0
-        self._samples_num = 0
-
-    def update(self, *inputs):
-        if len(inputs) != 2:
-            raise ValueError('SSIM need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
-        # y_pred = self._convert_data(inputs[0])
-        # y = self._convert_data(inputs[1])
-        y_pred = inputs[0]
-        y = inputs[1]
-        ssim = self.ssim_net(y_pred, y)
-        self.ssim += ssim
-        self._samples_num += 1
-
-    def eval(self):
-        if self._samples_num == 0:
-            raise RuntimeError('Total samples num must not be 0.')
-        return self.ssim / self._samples_num
-
-metrics = {
-    "psnr": PSNRMetrics(),
-    "ssim": SSIMMetrics()
-}
-
-def train(train_loader, net, opt):
+def train(train_loader, net, opt, test_loader):
     print('Start Training...')
+
+    lr_init = opt.lr
+    lr_end = 0.00001
+    lr_max = 0.1
+    warmup_epochs = 5
+    lr = get_lr(lr_init=lr_init, lr_end=lr_end, lr_max=lr_max, warmup_epochs=warmup_epochs,
+                total_epochs=opt.nEpochs, steps_per_epoch=50, lr_decay_mode='poly')
+    lr = Tensor(lr)
+
     l1_loss = nn.L1Loss()
-    net = CustomWithLossCell(net, l1_loss, opt)
-    optim = nn.Momentum(net.trainable_params(), learning_rate=opt.lr, momentum=0.9)
-    model = Model(net, l1_loss, optim, metrics=metrics)
+    optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
+    # model = Model(net, l1_loss, optim, metrics=metrics)
+    model = Model(net, l1_loss, optim)
 
-    config_ckpt = CheckpointConfig(save_checkpoint_steps=16000, keep_checkpoint_max=5)
-    ckpt_cb = ModelCheckpoint(prefix='edsr_baseline', directory='output/model', config=config_ckpt)
+    config_ckpt = CheckpointConfig(save_checkpoint_steps=50, keep_checkpoint_max=5)
+    ckpt_cb = ModelCheckpoint(prefix=opt.model_filename, directory='./output/model', config=config_ckpt)
+    epoch_per_eval = {"epoch":[], "psnr":[], "ssim":[]}
+    # eval_cb = EvalCallBack(net, test_loader, 1, epoch_per_eval) ##TODO:会超内存
+    summary_collector = SummaryCollector(summary_dir=f'./logs/{opt.model_filename}')
 
-    model.train(epoch=opt.nEpochs, train_dataset=train_loader, callbacks=[LossMonitor(), ckpt_cb],
+    model.train(epoch=opt.nEpochs, train_dataset=train_loader, callbacks=[LossMonitor(), ckpt_cb, summary_collector],
                 dataset_sink_mode=False)
+
+    # model_files = os.listdir('/home/work/user-job-dir/workspace/output/model')
+    # for name in model_files:
+    #     print(name)
+    #     mox.file.rename(f'/home/work/user-job-dir/workspace/output/model/{name}',
+    #                     f'obs://test-ddag/output/CSD/output/model/{name}')
     # for epoch in range(opt.nEpochs):
     #     model.train(epoch=1, train_dataset=training_data_loader, callbacks=[LossMonitor()], dataset_sink_mode=False)
     #

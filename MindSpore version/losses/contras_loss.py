@@ -9,14 +9,17 @@ from mindspore.train.model import Model
 from mindspore.common import dtype as mstype
 from mindspore.dataset.transforms import py_transforms
 from mindspore import load_checkpoint, load_param_into_net
+from mindspore.ops.functional import stop_gradient
+import mindspore.numpy as np
 
 from option import opt
 from models.config import imagenet_cfg
 from models.vgg_model import Vgg
 
-context.set_context(mode=context.GRAPH_MODE,
-                    device_target="Ascend",
-                    device_id=0)
+# context.set_context(mode=context.GRAPH_MODE,
+#                     device_target="Ascend",
+#                     device_id=0)
+context.set_context(device_id=0)
 
 cfg = {
     '11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
@@ -31,9 +34,8 @@ class Vgg19(nn.Cell):
 
         ##load vgg16
         vgg = Vgg(cfg['19'], phase="test", args=imagenet_cfg)
-        # model = "./AECRNet_MindSpore/trained_models/vgg19_ImageNet.ckpt"
-        model = os.path.join(opt.data_url, 'vgg19_ImageNet.ckpt')
-        # model = os.path.join('./trained_models', 'vgg19_ImageNet.ckpt')
+        # model = os.path.join(opt.data_url, 'vgg19_ImageNet.ckpt')
+        model = os.path.join('./trained_models', 'vgg19_ImageNet.ckpt')
         print(model)
         param_dict = load_checkpoint(model)
         load_param_into_net(vgg, param_dict)
@@ -76,15 +78,26 @@ class ContrastLoss(_Loss):
         self.l1 = nn.L1Loss()
         self.weights = [1.0/32, 1.0/16, 1.0/8, 1.0/4, 1.0]
 
-    def construct(self, pred, pos, neg):
-        pred_vgg, pos_vgg, neg_vgg = self.vgg(pred), self.vgg(pos), self.vgg(neg)
+    def construct(self, teacher, student, neg):
+        expand_dims = ops.ExpandDims() # unsqueeze算子
+        teacher_vgg, student_vgg, neg_vgg = self.vgg(teacher), self.vgg(student), self.vgg(neg)
+
         loss = 0
+        for i in range(len(teacher_vgg)):
+            neg_i = expand_dims(neg_vgg[i], 0) # [8, n_feats, w, h]
+            # neg_i = neg_i.repeat(student_vgg[i].shape[0], axis=0)  #TODO:1.3版本才会支持Tensor.repeat
+            neg_i = np.repeat(neg_i, student_vgg[i].shape[0], axis=0) # [16, 8, n_feats, w, h]
+            neg_i = neg_i.transpose((1, 0, 2, 3, 4)) # [8, 16, n_feats, w, h]
 
-        d_ap, d_an = 0, 0
-        for i in range(len(pred_vgg)):
-            d_ap = self.l1(pred_vgg[i], pos_vgg[i]) ##TODO:实际为pos_vgg[i].detach(), MindSpore不支持detach()
-            d_an = self.l1(pred_vgg[i], neg_vgg[i]) ##neg_vgg[i].detach()
-            contrastive = d_ap / (d_an + 1e-7)
+            d_ts = self.l1(stop_gradient(teacher_vgg[i]), student_vgg[i])
+            # d_sn = (stop_gradient(neg_i) - student_vgg[i]).abs().sum(axis=0).mean() #TODO:1.3版本才支持Tensor.sum
+            d_sn = (stop_gradient(neg_i) - student_vgg[i]).abs() # [8, 16, n_feats, w, h]
+            # print(d_sn.shape)
+            reduceSum = ops.ReduceSum()
+            d_sn = reduceSum(d_sn, 0).mean()
+            # print(d_sn)
 
+            contrastive = d_ts / (d_sn + 1e-7)
             loss += self.weights[i] * contrastive
+
         return self.get_loss(loss)

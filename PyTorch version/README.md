@@ -41,15 +41,28 @@ python main.py --scale 4 --pre_train FOLDER_OF_THE_PRETRAINED_MODEL --model_file
 
 2. Test your own image:
 
-   ```python
-   python main.py --scale 4 --pre_train output/model --model_filename edsr_x4_0.25student --test_only --self_ensemble --model EDSR --n_GPUs 1 --n_resblocks 32 --n_feats 256 --res_scale 0.1 --stu_width_mult 0.25 --model_stat --data_test Demo --save_results --dir_demo LOCATION_OF_YOUR_IMAGE 
-   ```
+```python
+python main.py --scale 4 --pre_train output/model --model_filename edsr_x4_0.25student --test_only --self_ensemble --model EDSR --n_GPUs 1 --n_resblocks 32 --n_feats 256 --res_scale 0.1 --stu_width_mult 0.25 --model_stat --data_test Demo --save_results --dir_demo LOCATION_OF_YOUR_IMAGE 
+```
 
-   The output SR image will be save in './test/result/'
+The output SR image will be save in './test/result/'
 
 ## Citation 
 
 If you find the code helpful in you research or work, please cite as:
+
+```@inproceedings{wu2021contrastive,
+@misc{wang2021compact,
+      title={Towards Compact Single Image Super-Resolution via Contrastive Self-distillation}, 
+      author={Yanbo Wang and Shaohui Lin and Yanyun Qu and Haiyan Wu and Zhizhong Zhang and Yuan Xie and Angela Yao},
+      year={2021},
+      eprint={2105.11683},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
+
+
 
 ## Acknowledgements
 

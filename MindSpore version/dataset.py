@@ -9,7 +9,7 @@ import os
 from os import listdir
 from os.path import join
 from PIL import Image, ImageOps
-from utils import norm
+from utils.utils import norm
 import random
 
 
@@ -80,20 +80,34 @@ def augment(img_in, img_tar, img_bic, flip_h=True, rot=True):
 
 
 class Dataset_Train():
-    def __init__(self, image_dir, patch_size, upscale_factor, data_augmentation, transform=None):
+    def __init__(self, image_dir, patch_size, upscale_factor, data_augmentation, data_range, transform=None, isTrain=True):
         super(Dataset_Train, self).__init__()
         self.image_filenames = [join(image_dir, x) for x in listdir(image_dir) if is_image_file(x)]
+        self.image_filenames = sorted(self.image_filenames)
         self.patch_size = patch_size
         self.upscale_factor = upscale_factor
         self.transform = transform
         self.data_augmentation = data_augmentation
+        self.isTrain = isTrain
+        data_range = [r.split('-') for r in data_range.split('/')]
+        if isTrain:
+            data_range = data_range[0]
+        else:
+            if len(data_range) > 1:
+                data_range = data_range[1]
+            else:
+                data_range = [1, len(self.image_filenames)]
+        self.begin, self.end = list(map(lambda x: int(x), data_range))
+        print(self.begin, self.end, data_range)
+        self.image_filenames = self.image_filenames[self.begin - 1:self.end]
 
     def __getitem__(self, index):
         target = load_img(self.image_filenames[index])
         input = target.resize((int(target.size[0] / self.upscale_factor), int(target.size[1] / self.upscale_factor)),
                               Image.BICUBIC)
         bicubic = rescale_img(input, self.upscale_factor)
-        input, target, bicubic, _ = get_patch(input, target, bicubic, self.patch_size, self.upscale_factor)
+        if self.isTrain:
+            input, target, bicubic, _ = get_patch(input, target, bicubic, self.patch_size, self.upscale_factor)
         if self.data_augmentation:
             input, target, bicubic, _ = augment(input, target, bicubic)
         # (H, W, C) to (C, H, W)
@@ -107,16 +121,19 @@ class Dataset_Train():
         # 标准化
         # input = norm(input, vgg=True)
         # target = norm(target_ori, vgg=True)
-        return input, target, bicubic
+
+        # return input, target, bicubic
+        return input, target
 
     def __len__(self):
         return len(self.image_filenames)
 
 
 class Dataset_Eval():
-    def __init__(self, lr_dir, upscale_factor, transform=None):
+    def __init__(self, lr_dir, upscale_factor, data_range, transform=None):
         super(Dataset_Eval, self).__init__()
         self.image_filenames = [join(lr_dir, x) for x in listdir(lr_dir) if is_image_file(x)]
+        self.image_filenames = sorted(self.image_filenames)
         self.upscale_factor = upscale_factor
         self.transform = transform
 

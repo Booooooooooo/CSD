@@ -1,10 +1,5 @@
-# @author AmythistHe
-# @version 1.0
-# @description
-# @create 2021/3/22 21:18
-
 from os.path import join
-from dataset import Dataset_DBPN_Eval, Dataset_DBPN, FileName_DBPN_Eval
+from dataset import Dataset_Eval, Dataset_Train, FileName_Eval
 import mindspore.dataset.transforms.py_transforms as py_transforms
 import mindspore.dataset.vision.py_transforms as py_vision
 
@@ -15,14 +10,14 @@ def transform():
     ])
 
 
-def get_training_set(data_dir, hr, upscale_factor, patch_size, data_augmentation):
+def get_training_set(data_dir, hr, upscale_factor, patch_size, data_augmentation, data_range, isTrain=True):
     hr_dir = join(data_dir, hr)
-    return Dataset_DBPN(hr_dir,patch_size, upscale_factor, data_augmentation, transform=transform())
+    return Dataset_Train(hr_dir,patch_size, upscale_factor, data_augmentation, transform=transform(), data_range=data_range, isTrain=isTrain)
 
 
-def get_eval_set(lr_dir, upscale_factor):
-    return Dataset_DBPN_Eval(lr_dir, upscale_factor, transform=transform())
+def get_eval_set(lr_dir, upscale_factor, data_range):
+    return Dataset_Eval(lr_dir, upscale_factor, transform=transform(), data_range=data_range)
 
 
 def get_eval_fileName(lr_dir):
-    return FileName_DBPN_Eval(lr_dir)
+    return FileName_Eval(lr_dir)
