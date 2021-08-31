@@ -47,24 +47,3 @@ python main.py --scale 4 --pre_train output/model --model_filename edsr_x4_0.25s
 
 The output SR image will be save in './test/result/'
 
-## Citation 
-
-If you find the code helpful in you research or work, please cite as:
-
-```@inproceedings{wu2021contrastive,
-@misc{wang2021compact,
-      title={Towards Compact Single Image Super-Resolution via Contrastive Self-distillation}, 
-      author={Yanbo Wang and Shaohui Lin and Yanyun Qu and Haiyan Wu and Zhizhong Zhang and Yuan Xie and Angela Yao},
-      year={2021},
-      eprint={2105.11683},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
-}
-```
-
-
-
-## Acknowledgements
-
-This code is built on [EDSR(PyTorch)](https://github.com/thstkdgus35/EDSR-PyTorch). We thank the authors for sharing their codes. 
-

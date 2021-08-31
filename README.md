@@ -15,3 +15,22 @@ Convolutional neural networks (CNNs) are highly successful for super-resolution 
 
 ![visual](https://github.com/Booooooooooo/CSD/blob/main/images/visual.png)
 
+## Citation 
+
+If you find the code helpful in you research or work, please cite as:
+
+```@inproceedings{wu2021contrastive,
+@misc{wang2021compact,
+      title={Towards Compact Single Image Super-Resolution via Contrastive Self-distillation}, 
+      author={Yanbo Wang and Shaohui Lin and Yanyun Qu and Haiyan Wu and Zhizhong Zhang and Yuan Xie and Angela Yao},
+      year={2021},
+      eprint={2105.11683},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
+
+## Acknowledgements
+
+This code is built on [EDSR(PyTorch)](https://github.com/thstkdgus35/EDSR-PyTorch). For the training part of the MindSpore version we referred to [DBPN-MindSpore](https://gitee.com/amythist/DBPN-MindSpore/tree/master) and the official [tutorial](https://www.mindspore.cn/tutorials/zh-CN/master/index.html). We thank the authors for sharing their codes. 
+

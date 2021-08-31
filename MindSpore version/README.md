@@ -49,7 +49,3 @@ python csd_train.py --data_dir LOCATION_OF_DATA --nEpochs 800 --model_filename e
 ```bash
 python test.py --data_dir LOCATION_OF_DATA --model_filename MODEL_NAME.ckpt --pretrained_path ./output/model --data_test Set5 --rgb_range 1 
 ```
-
-## Acknowledgements
-
-This code is built on [EDSR(PyTorch)](https://github.com/thstkdgus35/EDSR-PyTorch).  For the training part of the code we referred to [DBPN-MindSpore](https://gitee.com/amythist/DBPN-MindSpore/tree/master) and the official [tutorial](https://www.mindspore.cn/tutorials/zh-CN/master/index.html). We thank the authors for sharing their codes. 
