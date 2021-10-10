@@ -11,6 +11,7 @@ from mindspore.dataset.transforms import py_transforms
 from mindspore import load_checkpoint, load_param_into_net
 from mindspore.ops.functional import stop_gradient
 import mindspore.numpy as np
+import moxing as mox
 
 from option import opt
 from models.config import imagenet_cfg
@@ -35,7 +36,10 @@ class Vgg19(nn.Cell):
         ##load vgg16
         vgg = Vgg(cfg['19'], phase="test", args=imagenet_cfg)
         # model = os.path.join(opt.data_url, 'vgg19_ImageNet.ckpt')
-        model = os.path.join('./trained_models', 'vgg19_ImageNet.ckpt')
+        model = os.path.join('checkpoint', 'vgg19_ImageNet.ckpt')
+        if opt.obs:
+            mox.file.copy_parallel(src_url=os.path.join(opt.data_url, 'vgg19_ImageNet.ckpt'),
+                                   dst_url=model)
         print(model)
         param_dict = load_checkpoint(model)
         load_param_into_net(vgg, param_dict)

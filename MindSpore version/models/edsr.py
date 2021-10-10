@@ -1,5 +1,6 @@
 import mindspore
 from models import common
+from option import opt
 
 import mindspore.nn as nn
 import mindspore.ops as ops
@@ -35,19 +36,21 @@ class EDSR(nn.Cell):
         # self.tail_conv = nn.Conv2d(in_channels=self.n_feats, out_channels=args.n_colors, kernel_size=self.kernel_size, pad_mode='pad', padding=self.kernel_size // 2, has_bias=True)
         self.tail_conv = common.conv(self.n_feats, args.n_colors, self.kernel_size, padding=self.kernel_size//2)
 
+    # def construct(self, x, width_mult=1.0):
     def construct(self, x, width_mult):
-        # print(width_mult)
-        # print(self.trainable_params())
-        width_mult = width_mult.asnumpy().item()
-        # print(width_mult)
-        # round = ops.Round()
-        # feature_width = round(self.n_feats * width_mult).asnumpy().item()
-        feature_width = int(self.n_feats * width_mult)
+        if opt.obs:
+            feature_width = 1.0
+            if width_mult != 1:
+                feature_width = int(self.n_feats * 0.25)
+        else:
+            width_mult = width_mult.asnumpy().item()
+            feature_width = int(self.n_feats * width_mult)
         conv2d = ops.Conv2D(out_channel=feature_width, kernel_size=self.kernel_size, mode=1, pad_mode='pad',
                             pad=self.kernel_size // 2)
         biasadd = ops.BiasAdd()
 
-        x = common.MeanShift(x, self.rgb_range)
+        if not opt.obs:
+            x = common.MeanShift(x, self.rgb_range)
         weight = self.head.weight.clone()[:feature_width, :self.n_colors, :, :]
         bias = self.head.bias.clone()[:feature_width]
         x = conv2d(x, weight)
@@ -68,6 +71,7 @@ class EDSR(nn.Cell):
         conv2d = ops.Conv2D(out_channel=self.n_colors, kernel_size=self.kernel_size, mode=1, pad_mode='pad', pad=self.kernel_size//2)
         x = conv2d(x, weight)
         x = biasadd(x, bias)
-        x = common.MeanShift(x, self.rgb_range, sign=1)
+        if not opt.obs:
+            x = common.MeanShift(x, self.rgb_range, sign=1)
 
         return x

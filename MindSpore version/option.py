@@ -57,9 +57,13 @@ parser.add_argument('--teacher_model', type=str, default='output/model/edsr_base
 # ModelArts参数
 parser.add_argument('--data_url', type=str, default='')
 parser.add_argument('--train_url', type=str, default='')
+parser.add_argument('--obs', type=bool, default=False)
 
 opt = parser.parse_args()
 opt.scale = list(map(lambda x: int(x), opt.scale.split('+')))
 # gpus_list = range(opt.gpus)
-# opt.data_dir = opt.data_url
+
+import moxing
+moxing.file.copy_parallel(src_url=opt.data_url, dst_url='dataset/')
+opt.data_dir = 'dataset/'
 print(opt)

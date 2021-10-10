@@ -33,11 +33,12 @@ def train(train_loader, net, opt, test_loader):
     model.train(epoch=opt.nEpochs, train_dataset=train_loader, callbacks=[LossMonitor(), ckpt_cb, summary_collector],
                 dataset_sink_mode=False)
 
-    # model_files = os.listdir('/home/work/user-job-dir/workspace/output/model')
-    # for name in model_files:
-    #     print(name)
-    #     mox.file.rename(f'/home/work/user-job-dir/workspace/output/model/{name}',
-    #                     f'obs://test-ddag/output/CSD/output/model/{name}')
+    if opt.obs:
+        model_files = os.listdir('/home/work/user-job-dir/workspace/output/model')
+        for name in model_files:
+            print(name)
+            mox.file.rename(f'/home/work/user-job-dir/workspace/output/model/{name}',
+                            f'obs://test-ddag/output/CSD/output/model/{name}')
     # for epoch in range(opt.nEpochs):
     #     model.train(epoch=1, train_dataset=training_data_loader, callbacks=[LossMonitor()], dataset_sink_mode=False)
     #

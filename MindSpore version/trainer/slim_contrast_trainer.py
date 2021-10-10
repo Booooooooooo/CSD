@@ -4,7 +4,10 @@ from mindspore import ParameterTuple, Tensor
 import mindspore.ops as ops
 import mindspore.numpy as numpy
 from mindspore import load_checkpoint, load_param_into_net, save_checkpoint
+import moxing as mox
+import os
 
+from option import opt
 from losses.loss import CSD_Loss
 
 class NetWithLossCell(nn.Cell):
@@ -62,14 +65,34 @@ class TrainOneStepCell(nn.Cell):
         return ops.depend(loss, self.optimizer(grads)), loss
 
 def load_model(net, opt):
+    teacher_model = opt.teacher_model
+    if opt.obs:
+        mox.file.copy_parallel(src_url=os.path.join(opt.data_url, opt.teacher_model),dst_url=f'checkpoint/{opt.teacher_model}')
+        teacher_model = f'checkpoint/{opt.teacher_model}'
     print("Loading Teacher")
-    param_dict = load_checkpoint(opt.teacher_model)
+    param_dict = load_checkpoint(teacher_model)
     # # 将参数加载到网络中
     load_param_into_net(net, param_dict)
     # # print("After loading")
     # # for item in net.get_parameters():
     # #     print(item.asnumpy())
     # #     break
+
+def load_checkpoint(net, opt):
+    model = f'./output/model/{opt.model_filename}.ckpt'
+    if opt.obs:
+        mox.file.copy_parallel(src_url=os.path.join(opt.data_url, opt.model_filename),
+                               dst_url=f'checkpoint/{opt.model_filename}')
+        model = f'checkpoint/{opt.model_filename}'
+
+    if not os.path.exists(model):
+        print("Training from scratch...")
+        return
+
+    print("Loading Checkpoint")
+    param_dict = load_checkpoint(model)
+    # # 将参数加载到网络中
+    load_param_into_net(net, param_dict)
 
 def csd_train(train_loader, net, opt):
     print("[CSD] Start Training...")
@@ -98,8 +121,10 @@ def csd_train(train_loader, net, opt):
             lr = batch["input"]
             hr = batch["target"]
 
-            _, loss = train_cell(lr, hr, Tensor(opt.stu_width_mult), Tensor(1))
-            # _, loss = train_cell(lr, hr, opt.stu_width_mult, 1)
+            if opt.obs:
+                _, loss = train_cell(lr, hr, 0.25, 1)
+            else:
+                _, loss = train_cell(lr, hr, Tensor(opt.stu_width_mult), Tensor(1.0))
             epoch_loss += loss
 
         print(f"Epoch[{epoch}] loss: {epoch_loss.asnumpy()}")
@@ -110,4 +135,10 @@ def csd_train(train_loader, net, opt):
             # cb_params.cur_epoch_num = epoch + 1
             # ckpt_cb.step_end(run_context)
 
+    if opt.obs:
+        model_files = os.listdir('/home/work/user-job-dir/workspace/output/model')
+        for name in model_files:
+            print(name)
+            mox.file.rename(f'/home/work/user-job-dir/workspace/output/model/{name}',
+                            f'obs://test-ddag/output/CSD/output/model/{name}')
 

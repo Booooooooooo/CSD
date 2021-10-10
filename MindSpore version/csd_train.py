@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore.communication.management import init
 
 if __name__ == '__main__':
-    context.set_auto_parallel_context(device_num=opt.gpus)
+    # context.set_auto_parallel_context(device_num=opt.gpus)
     # #distributed training
     # context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     # init("nccl")
@@ -71,6 +71,7 @@ if __name__ == '__main__':
     # print(test(net, testing_data_loader, opt.stu_width_mult))
     # print(test(net, testing_data_loader, Tensor(1)))
 
+    load_checkpoint(net, opt)
     ### Train CSD
     csd_train(training_data_loader, net, opt)
 

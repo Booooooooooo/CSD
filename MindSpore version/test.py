@@ -10,8 +10,10 @@ from data import get_training_set
 import mindspore.dataset as ds
 from mindspore import load_checkpoint, load_param_into_net
 from mindspore import context
+from mindspore import Tensor
 
 def test(net, test_loader, width_mult=1):
+    ## TODO:验证一下这部分有没有梯度，为什么会造成测试结果不一样的问题
     # l1_loss = nn.L1Loss()
     model = Model(net)
     # result = model.eval(test_loader)
@@ -23,7 +25,7 @@ def test(net, test_loader, width_mult=1):
     ssim = 0.0
     bic_psnr = 0.0
     for item in test_loader.create_dict_iterator():
-        sr = net(item["input"], width_mult) ##TODO：可能出来尺度会不一样，要处理一下
+        sr = net(item["input"], Tensor(width_mult))
         # sr = model.predict(item["input"])
         hr = item["target"]
 
@@ -110,7 +112,7 @@ if __name__ == '__main__':
     #     print(item.asnumpy())
     #     break
     print(f"Testing trained model {opt.model_filename}")
-    # print(test(net, testing_data_loader, opt.stu_width_mult))
+    print(test(net, testing_data_loader, opt.stu_width_mult))
     print(test(net, testing_data_loader))
 
 
