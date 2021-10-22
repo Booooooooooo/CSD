@@ -32,5 +32,5 @@ If you find the code helpful in you research or work, please cite as:
 
 ## Acknowledgements
 
-This code is built on [EDSR(PyTorch)](https://github.com/thstkdgus35/EDSR-PyTorch). For the training part of the MindSpore version we referred to [DBPN-MindSpore](https://gitee.com/amythist/DBPN-MindSpore/tree/master) and the official [tutorial](https://www.mindspore.cn/tutorials/zh-CN/master/index.html). We thank the authors for sharing their codes. 
+This code is built on [EDSR(PyTorch)](https://github.com/thstkdgus35/EDSR-PyTorch). For the training part of the MindSpore version we referred to [DBPN-MindSpore](https://gitee.com/amythist/DBPN-MindSpore/tree/master), [ModelZoo-RCAN](https://gitee.com/mindspore/models/tree/master/research/cv/RCAN) and the official [tutorial](https://www.mindspore.cn/tutorials/zh-CN/master/index.html). We thank the authors for sharing their codes. 
 
